@@ -50,3 +50,9 @@ jobs:
           file: ./docker/Dockerfile.backend
           push: true
           tags: sartajashraf/monorepo-backend-cicd-docker-nginx:${{ github.sha }}
+
+      - name: SSH and Deploy to VPS
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 600 ssh_key
+          ssh -i ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker stop user_backend && docker run -d --name user_backend -p 8080:8080 sartajashraf/monorepo-backend-cicd-docker-nginx:${{ github.sha }}"
