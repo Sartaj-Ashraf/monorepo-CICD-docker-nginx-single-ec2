@@ -28,6 +28,10 @@ jobs:
   deploy_backend:
     runs-on: ubuntu@latest
 
+    concurrency:
+      group: backend
+      cancel-in-progress: true
+
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
