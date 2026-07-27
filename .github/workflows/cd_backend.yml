@@ -55,4 +55,29 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
           chmod 600 ~/ssh_key
-          ssh -i ~/ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker kill user_backend && docker rm user_backend && docker run -d --name user_backend -p 8080:8080 sartajashraf/monorepo-backend-cicd-docker-nginx:${{ github.sha }}"
+          ssh -i ~/ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker run -d --name user_backend -p 8080:8080 sartajashraf/monorepo-backend-cicd-docker-nginx:${{ github.sha }}"
+  
+  deploy_ws:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USEREMAIL }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      
+      - name: Build and push 
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.ws
+          push: true
+          tags: sartajashraf/monorepo-ws-cicd-docker-nginx:${{ github.sha }}
+      - name: Deploy to the VM
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
+          chmod 700 ~/ssh_key
+          ssh -i ~/ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker run --name ws_backend -d -p 8081:8081 sartajashraf/monorepo-ws-cicd-docker-nginx:${{ github.sha }}"
