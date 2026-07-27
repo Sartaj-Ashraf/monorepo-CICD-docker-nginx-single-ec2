@@ -1,0 +1,48 @@
+# This workflow is triggered when code is pushed to the main branch
+# It performs the following steps:
+# 1. Checks out the code.
+    # -> uses: actions/checkout@v2
+
+# 2. Logs into Docker Hub.
+    # -> uses: docker/login-action@v2
+      #  with: username and password
+    
+# 3. Builds a Docker image.
+    # -> uses: docker/build-push-action@v2
+
+# 4. Pushes the image to Docker Hub.
+    # -> uses: docker/build-push-action@v2
+
+# 5. Deploys the image to a VM by:
+#    a. SSHing into the machine.
+#    b. Stopping the existing container.
+#    c. Running the new container.
+
+name: Deploy backend of the application
+
+on: 
+  push:
+    branches: [main]
+
+jobs:
+  deploy_backend:
+    runs-on: ubuntu@latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USEREMAIL }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+
+      - name: Build and push to docker hub
+        uses: docker/build-push-action@v2
+        with:
+          context: ./backend
+          file: ./docker/Dockerfile.backend
+          push: true
+          tags: sartajashraf/monorepo-backend-cicd-docker-nginx:${{ github.sha }}
