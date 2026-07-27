@@ -26,7 +26,7 @@ on:
 
 jobs:
   deploy_backend:
-    runs-on: ubuntu@latest
+    runs-on: ubuntu-latest
 
     concurrency:
       group: backend
