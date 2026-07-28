@@ -81,3 +81,32 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
           chmod 700 ~/ssh_key
           ssh -i ~/ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker run --name ws_backend -d -p 8081:8081 sartajashraf/monorepo-ws-cicd-docker-nginx:${{ github.sha }}"
+
+  deploy_frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USEREMAIL }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      
+      - name: Build and push 
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.frontend
+          build-args:
+            - DATABASE_URL=${{ secrets.DATABASE_URL }}
+          push: true
+          tags: sartajashraf/monorepo-frontend-cicd-docker-nginx:${{ github.sha }}
+
+      - name: Deploy to the VM
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
+          chmod 700 ~/ssh_key
+          ssh -i ~/ssh_key -o StrictHostKeyChecking=no ${{ secrets.SSH_HOST_USER }}@${{ secrets.SSH_HOST_IP }} -t "docker run --name user_frontend -d -p 3000:3000 sartajashraf/monorepo-frontend-cicd-docker-nginx:${{ github.sha }}"
+      
